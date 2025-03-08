@@ -1,3 +1,5 @@
+[![Compile and run tests](https://github.com/alessandrocandolini/haskell-ticket-reservation/actions/workflows/ci.yml/badge.svg)](https://github.com/alessandrocandolini/haskell-ticket-reservation/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/alessandrocandolini/haskell-ticket-reservation/graph/badge.svg?token=1tCg27i1X1)](https://codecov.io/gh/alessandrocandolini/haskell-ticket-reservation)
+
 # haskell-ticket-reservation
 
 ## How to build and run locally
