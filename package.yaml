@@ -1,0 +1,66 @@
+name:                haskell-ticket-reservation
+version:             0.1.0.0
+description:         "haskell-ticket-reservation"
+
+dependencies:
+- base >= 4.7 && < 5
+- text
+- containers
+- nonempty-containers
+- aeson
+- aeson-pretty
+- safe
+- either
+- witherable
+- envparse
+- neat-interpolation
+- wai
+- warp
+- servant
+- servant-server
+
+default-extensions:
+- OverloadedStrings
+
+ghc-options:
+  - -Wall
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wredundant-constraints
+  - -Wunused-packages
+  - -O2
+
+library:
+  source-dirs: src
+
+executables:
+  haskell-ticket-reservation:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - haskell-ticket-reservation
+
+tests:
+  haskell-ticket-reservation-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -O0 # No optimization for faster test runs
+    dependencies:
+    - haskell-ticket-reservation
+    - hspec
+    - QuickCheck
+    - hspec-wai
+    - hspec-wai-json
+    build-tools:
+    - hspec-discover
+
+verbatim:
+  cabal-version: 3.0
