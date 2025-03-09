@@ -35,7 +35,7 @@ library:
   source-dirs: src
 
 executables:
-  haskell-ticket-reservation:
+  tickets:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

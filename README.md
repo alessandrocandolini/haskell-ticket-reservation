@@ -37,19 +37,17 @@ stack exec haskell-ticket-reservation
 ```
 or passing arguments
 ```
-stack exec haskell-ticket-reservation -- -v doctor
+stack exec tickets
 ```
 
 To **install** the executable under `~/.local/bin`,
 ```
 stack install
 ```
-and the executable can be run with `haskell-ticket-reservation` assuming `~/.local/bin` is in the `$PATH` variable.
+and the executable can be run with `tickets` assuming `~/.local/bin` is in the `$PATH` variable.
 
 To run a version of **ghci** compatible with the resolver
 ```
 stack ghci
 ```
 For more information about how to use `stack`, refer to the [official docs](https://docs.haskellstack.org/en/stable/).
-
-This projects uses [optparse-applicative](https://hackage.haskell.org/package/optparse-applicative) to implement command-line arguments parsing. Optparse-applicative automatically generates an helper from code. It's recommended to use the generated helper to explore all the available CLI options.
