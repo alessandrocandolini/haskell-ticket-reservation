@@ -21,6 +21,8 @@ dependencies:
 - hedis
 - refined
 - uuid
+- async
+- stm
 
 default-extensions:
 - OverloadedStrings
