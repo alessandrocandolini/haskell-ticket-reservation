@@ -18,7 +18,17 @@ spec = describe "Simple test" $ do
     \l -> reverse (reverse l) == (l :: [Int])
 
   with (return app) $ do
-    describe "GET /status" $ do
+    describe "GET /health/live/" $ do
       it "responds with ok status" $ do
         let response = [json|{"status":"ok"}|]
-        get "/status" `shouldRespondWith` response{matchStatus = 200}
+        get "/health/live/" `shouldRespondWith` response{matchStatus = 200}
+
+    describe "GET /health/startup/" $ do
+      it "responds with ok status" $ do
+        let response = [json|{"status":"ok"}|]
+        get "/health/startup/" `shouldRespondWith` response{matchStatus = 200}
+
+    describe "GET /health/ready/" $ do
+      it "responds with ok status" $ do
+        let response = [json|{"status":"ok"}|]
+        get "/health/ready/" `shouldRespondWith` response{matchStatus = 200}
