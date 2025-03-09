@@ -9,7 +9,7 @@ import Data.Data (Proxy (Proxy))
 import GHC.Generics (Generic)
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp (run)
-import Servant (Get, Server, (:>))
+import Servant (Get, Server, (:<|>) (..), (:>))
 import Servant.API (JSON)
 import Servant.Server (serve)
 
@@ -20,9 +20,12 @@ newtype StatusResponse = StatusResponse
 
 instance ToJSON StatusResponse
 
-type StatusEndpoint = "status" :> Get '[JSON] StatusResponse
+type HealthcheckEndpoints =
+  "health" :> "live" :> Get '[JSON] StatusResponse
+    :<|> "health" :> "startup" :> Get '[JSON] StatusResponse
+    :<|> "health" :> "ready" :> Get '[JSON] StatusResponse
 
-type API = StatusEndpoint
+type API = HealthcheckEndpoints
 
 api :: Proxy API
 api = Proxy
@@ -30,9 +33,13 @@ api = Proxy
 app :: Application
 app = serve api server
 
-startServer :: IO ()
-startServer = run 8080 app
+runApp :: IO ()
+runApp = runServer
+
+runServer :: IO ()
+runServer = run 8080 app
 
 server :: Server API
-server = pure ok where
-   ok = StatusResponse "ok"
+server = (pure ok) :<|> (pure ok) :<|> (pure ok)
+ where
+  ok = StatusResponse "ok"
