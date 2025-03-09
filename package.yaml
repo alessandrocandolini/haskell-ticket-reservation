@@ -18,6 +18,7 @@ dependencies:
 - warp
 - servant
 - servant-server
+- hedis
 
 default-extensions:
 - OverloadedStrings
