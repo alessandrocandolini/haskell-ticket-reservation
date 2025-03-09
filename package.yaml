@@ -19,6 +19,8 @@ dependencies:
 - servant
 - servant-server
 - hedis
+- refined
+- uuid
 
 default-extensions:
 - OverloadedStrings
