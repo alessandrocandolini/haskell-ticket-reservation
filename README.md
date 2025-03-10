@@ -7,11 +7,11 @@
 The project uses the [Haskell tool stack](https://docs.haskellstack.org/en/stable/README/). The recommended way to install stack is by using [ghcup](https://www.haskell.org/ghcup/).
 It's also possible to use [the nix package manager](https://nixos.org/), but this project does not provide a nix configuration file.
 
-Assuming `stack` is installed in the system, to **build** the project use
+Assuming `stack` is installed in the system, to **compile** the project use
 ```
 stack build
 ```
-To **build and run the tests**, run
+To **compile and run the tests**, run
 ```
 stack test
 ```
@@ -19,6 +19,8 @@ or equivalently
 ```
 stack build --test
 ```
+⚠️ Running the application or the tests locally require a connection to redis instance running on `localhost:6379`. See "Docker setup" section below on how to provide one via docker. 
+
 For **faster feedback loop** during development, it's possible to run tests continuously on every file change:
 ```
 stack test --fast --file-watch
@@ -51,3 +53,18 @@ To run a version of **ghci** compatible with the resolver
 stack ghci
 ```
 For more information about how to use `stack`, refer to the [official docs](https://docs.haskellstack.org/en/stable/).
+
+
+## Docker setup
+
+To run the application or the tests locally, a local redis instance is needed. A `Dockerfile` is provided to setup one. 
+Assuming `docker` command is available, and the docker daemon is running 
+```
+docker compose up -d
+```
+and to tear down 
+```
+docker compose down
+```
+
+The CI is configured to perform exactly these same steps. 
