@@ -1,19 +1,13 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeOperators #-}
-
 module Server where
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
-import Data.Aeson (ToJSON, encode)
+import Data.Aeson (encode)
 import qualified Data.ByteString as B
 import Data.Data (Proxy (Proxy))
 import Database.Redis (Connection, Reply, checkedConnect, defaultConnectInfo, echo, runRedis)
-import GHC.Generics (Generic)
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp (run)
 import Servant (
-  Get,
   Handler,
   Server,
   err500,
@@ -21,31 +15,10 @@ import Servant (
   errHeaders,
   throwError,
   (:<|>) (..),
-  (:>),
  )
-import Servant.API (JSON)
 import Servant.Server (serve)
-
-newtype StatusResponse = StatusResponse
-  { status :: String
-  }
-  deriving (Generic, Eq, Show)
-
-instance ToJSON StatusResponse
-
-newtype ErrorResponse = ErrorResponse
-  { message :: String
-  }
-  deriving (Generic, Eq, Show)
-
-instance ToJSON ErrorResponse
-
-type HealthcheckEndpoints =
-  "health" :> "live" :> Get '[JSON] StatusResponse
-    :<|> "health" :> "startup" :> Get '[JSON] StatusResponse
-    :<|> "health" :> "ready" :> Get '[JSON] StatusResponse
-
-type API = HealthcheckEndpoints
+import Models
+import Endpoints (API)
 
 throw500With :: String -> Handler a
 throw500With msg =
@@ -57,11 +30,11 @@ throw500With msg =
 
 app :: IO Application
 app = do
-  connection <- checkedConnect defaultConnectInfo
+  connection <- checkedConnect defaultConnectInfo --  checkedConnect incorporates a ping
   pure $ buildApp connection
 
 buildApp :: Connection -> Application
-buildApp conn = serve api (server conn)
+buildApp conn = serve api (handlers conn)
  where
   api :: Proxy API
   api = Proxy
@@ -72,8 +45,8 @@ runApp = app >>= run 8080
 startup :: Connection -> IO (Either Reply B.ByteString)
 startup connection = runRedis connection (echo "hello")
 
-server :: Connection -> Server API
-server connection =
+handlers :: Connection -> Server API
+handlers connection =
   liveHandler
     :<|> startupHandler connection
     :<|> readyHandler
