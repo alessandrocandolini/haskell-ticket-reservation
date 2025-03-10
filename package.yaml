@@ -18,6 +18,7 @@ dependencies:
 - warp
 - servant
 - servant-server
+- servant-checked-exceptions
 - hedis
 - refined
 - uuid
