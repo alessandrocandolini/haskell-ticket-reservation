@@ -54,6 +54,9 @@ jobs:
         stack-version: ${{ matrix.stack }}
         enable-stack: true
 
+    - name: Set up Docker Compose
+      run: docker compose up -d
+
     - name: Install dependencies
       if: steps.cache.outputs.cache-hit != 'true' && success()
       timeout-minutes: 15
@@ -85,3 +88,8 @@ jobs:
         verbose: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+
+    - name: Tear down Docker Compose
+      if: always()
+      run: docker compose down
