@@ -23,6 +23,7 @@ dependencies:
 - uuid
 - async
 - stm
+- bytestring
 
 default-extensions:
 - OverloadedStrings

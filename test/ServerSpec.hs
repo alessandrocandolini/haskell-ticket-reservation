@@ -17,7 +17,7 @@ spec = describe "Simple test" $ do
   prop "property-based unit test" $
     \l -> reverse (reverse l) == (l :: [Int])
 
-  with (return app) $ do
+  with app $ do
     describe "GET /health/live/" $ do
       it "responds with ok status" $ do
         let response = [json|{"status":"ok"}|]
