@@ -2,7 +2,7 @@
 
 module ModelsSpec where
 
-import Env (parsePure)
+import Env (Error (EmptyError), parsePure)
 import Models (
   ApplicationConfig (ApplicationConfig),
   applicationConfigEnvParser,
@@ -21,3 +21,6 @@ spec = describe "Models" $ do
 
     it "uses default values when no env variable is set" $
       parsePure applicationConfigEnvParser [] `shouldBe` Right (ApplicationConfig "localhost" 6379)
+
+    it "failt to parse empty env variables" $
+      parsePure applicationConfigEnvParser [("REDIS_HOST", ""), ("REDIS_PORT", "")] `shouldBe` Left [("REDIS_HOST", EmptyError), ("REDIS_PORT", EmptyError)]
