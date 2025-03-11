@@ -25,7 +25,7 @@ applicationConfigEnvParser :: Parser Error ApplicationConfig
 applicationConfigEnvParser =
   ApplicationConfig
     <$> var (str <=< nonempty) "REDIS_HOST" (def "localhost" <> helpDef (helpMessage "Redis host"))
-    <*> var auto "REDIS_PORT" (def 6379 <> helpDef (helpMessage "Redis port"))
+    <*> var (auto <=< nonempty) "REDIS_PORT" (def 6379 <> helpDef (helpMessage "Redis port"))
  where
   helpMessage prefix value = prefix ++ "[default: " ++ show value ++ " ]"
 
