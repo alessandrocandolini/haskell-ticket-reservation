@@ -4,67 +4,64 @@
 
 ## How to build and run locally
 
-The project uses the [Haskell tool stack](https://docs.haskellstack.org/en/stable/README/). The recommended way to install stack is by using [ghcup](https://www.haskell.org/ghcup/).
-It's also possible to use [the nix package manager](https://nixos.org/), but this project does not provide a nix configuration file.
+The project uses the [Haskell tool stack](https://docs.haskellstack.org/en/stable/README/). The recommended way to install stack is via [ghcup](https://www.haskell.org/ghcup/).
+Alternatively, it is possible to install stack using [the nix package manager](https://nixos.org/), but this project does not provide a nix configuration file.
 
 Assuming `stack` is installed in the system, to **compile** the project use
 ```
 stack build
 ```
-To **compile and run the tests**, run
+To **compile and run the tests**, use
 ```
 stack test
 ```
-or equivalently
-```
-stack build --test
-```
-⚠️ Running the application or the tests locally require a connection to redis instance running on `localhost:6379`. See "Docker setup" section below on how to provide one via docker. 
+⚠️ Running the application or tests locally requires a Redis instance available at `localhost:6379`. See the [Docker Setup](README.md#docker-setup) section below for instructions on setting one up via Docker. 
 
-For **faster feedback loop** during development, it's possible to run tests continuously on every file change:
+For a **faster development loop**, it is possible to continuously run tests on file changes using
 ```
 stack test --fast --file-watch
 ```
-To run tests with **test coverage** instrumentation,
+To run tests with **test coverage** instrumentation, use
 ```
 stack test --coverage
 ```
-which generates a textual and HTML report.
+This generates both a textual and an HTML report.
 
-Note: Tests are run in the CI and test coverage reports are automatically uploaded to codecov.
+📌 Tests are automatically executed in CI, and coverage reports are uploaded to Codecov.
 
-To **run** the executable via slack,
+To **run** the application via slack, use
 ```
-stack exec haskell-ticket-reservation
+stack exec tickets
 ```
-or passing arguments
+or, if passing arguments,
 ```
 stack exec tickets
 ```
 
-To **install** the executable under `~/.local/bin`,
+To **install** the executable under `~/.local/bin`, use 
 ```
 stack install
 ```
-and the executable can be run with `tickets` assuming `~/.local/bin` is in the `$PATH` variable.
+Once installed, the executable can be run using the `tickets` command, assuming `~/.local/bin` is in the `$PATH`.
 
-To run a version of **ghci** compatible with the resolver
+To start a **GHCi** session compatible with the project's resolver, use 
 ```
 stack ghci
 ```
-For more information about how to use `stack`, refer to the [official docs](https://docs.haskellstack.org/en/stable/).
+For more details on how to use `stack`, refer to the [official docs](https://docs.haskellstack.org/en/stable/).
 
 
 ## Docker setup
 
-To run the application or the tests locally, a local redis instance is needed. A `Dockerfile` is provided to setup one. 
-Assuming `docker` command is available, and the docker daemon is running 
+A local Redis instance is required to run the application or tests. A `docker-compose.yml` file is provided to simplify the setup.
+
+Assuming `docker` is installed and the Docker daemon is running, start Redis with:
 ```
 docker compose up -d
 ```
-and to tear down 
+To tear down the container, use 
 ```
 docker compose down
 ```
 
-The CI is configured to perform exactly these same steps. 
+The CI pipeline follows the same process.
