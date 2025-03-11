@@ -25,6 +25,8 @@ dependencies:
 - async
 - stm
 - bytestring
+- http-types
+- network
 
 default-extensions:
 - OverloadedStrings
