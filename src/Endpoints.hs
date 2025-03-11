@@ -1,20 +1,18 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Endpoints where
+module Endpoints (API) where
 
-import Models (StatusResponse)
+import Models (DatabaseConnectionError, StatusResponse)
 import Servant (
   Get,
   (:<|>) (..),
   (:>),
  )
 import Servant.API (JSON)
+import Servant.Checked.Exceptions (Throws)
 
-type HealthcheckEndpoints =
-  "health" :> "live" :> Get '[JSON] StatusResponse
-    :<|> "health" :> "startup" :> Get '[JSON] StatusResponse
-    :<|> "health" :> "ready" :> Get '[JSON] StatusResponse
+type HealthcheckEndpoints = "healthcheck" :> Throws DatabaseConnectionError :> Get '[JSON] StatusResponse
 
 type ReservationEndpoints =
   "api" :> "v1" :> "events" :> Get '[JSON] StatusResponse

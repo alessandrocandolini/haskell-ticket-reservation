@@ -1,36 +1,37 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 module Server where
 
+import qualified Env
 import Control.Monad.IO.Class (MonadIO (liftIO))
-import Data.Aeson (encode)
 import qualified Data.ByteString as B
 import Data.Data (Proxy (Proxy))
-import Database.Redis (Connection, Reply, checkedConnect, defaultConnectInfo, echo, runRedis)
+import Database.Redis (ConnectInfo (connectHost, connectPort), Connection, PortID (PortNumber), Reply, checkedConnect, defaultConnectInfo, echo, runRedis, connect)
+import Endpoints (API)
+import Models
+    ( DatabaseConnectionError(..),
+      StatusResponse(..),
+      ApplicationConfig(redisPort, redisHost),
+      applicationConfigEnvParser )
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp (run)
 import Servant (
   Handler,
-  Server,
-  err500,
-  errBody,
-  errHeaders,
-  throwError,
-  (:<|>) (..),
+  ServerT,
  )
+import Servant.Checked.Exceptions (Envelope, pureErrEnvelope, pureSuccEnvelope)
 import Servant.Server (serve)
-import Models
-import Endpoints (API)
-
-throw500With :: String -> Handler a
-throw500With msg =
-  throwError $
-    err500
-      { errBody = encode (ErrorResponse msg)
-      , errHeaders = [("Content-Type", "application/json")]
-      }
+import Control.Exception (try, SomeException)
 
 app :: IO Application
 app = do
-  connection <- checkedConnect defaultConnectInfo --  checkedConnect incorporates a ping
+  config <- Env.parse (Env.header "Parse Redis Config") applicationConfigEnvParser
+  appWithConfig config
+
+appWithConfig :: ApplicationConfig -> IO Application
+appWithConfig config = do
+  connection <- connect defaultConnectInfo{connectHost = redisHost config, connectPort = PortNumber (redisPort config)}
   pure $ buildApp connection
 
 buildApp :: Connection -> Application
@@ -42,20 +43,15 @@ buildApp conn = serve api (handlers conn)
 runApp :: IO ()
 runApp = app >>= run 8080
 
-startup :: Connection -> IO (Either Reply B.ByteString)
-startup connection = runRedis connection (echo "hello")
+startup :: Connection -> IO (Either SomeException (Either Reply B.ByteString))
+startup connection = try $ runRedis connection (echo "hello")
 
-handlers :: Connection -> Server API
-handlers connection =
-  liveHandler
-    :<|> startupHandler connection
-    :<|> readyHandler
- where
-  ok = StatusResponse "ok"
-  liveHandler = pure ok
-  readyHandler = pure ok
-  startupHandler conn = do
-    result <- liftIO $ startup conn
-    case result of
-      Right _ -> pure (StatusResponse "ok")
-      Left _ -> throw500With "Redis connection failed"
+healthcheckHandler :: Connection -> Handler (Envelope '[DatabaseConnectionError] StatusResponse)
+healthcheckHandler conn = do
+  result <- liftIO $ startup conn
+  case result of
+    Right (Right _) -> pureSuccEnvelope Ok
+    _ -> pureErrEnvelope DatabaseConnectionError
+
+handlers :: Connection -> ServerT API Handler
+handlers = healthcheckHandler
