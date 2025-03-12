@@ -49,9 +49,9 @@ instance ErrStatus DatabaseConnectionError where
 newtype UserId = UserId UUID
   deriving (Eq, Show)
 
-newtype EventId = EventId String
+newtype EventId = EventId UUID
   deriving (Eq, Show)
-  deriving (IsString) via String
+  deriving (ToJSON, FromJSON) via UUID
 
 newtype MaximumNumberOfSeats = MaximumNumberOfSeats (Refined (FromTo 10 1000) Int)
 newtype SeatId = SeatId Int
@@ -75,7 +75,7 @@ newtype CreateEventResponse = CreateEventResponse
   deriving (Eq, Show, Generic)
 
 instance ToJSON CreateEventResponse
- 
+
 newtype Seats = Seats {
   availableSeats :: [SeatId] } deriving (Eq, Show, Generic)
 
