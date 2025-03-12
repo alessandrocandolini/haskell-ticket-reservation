@@ -1,57 +1,57 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Server where
+module Server (runApp, appWithConfig) where
 
-import qualified Env
 import Control.Monad.IO.Class (MonadIO (liftIO))
-import qualified Data.ByteString as B
 import Data.Data (Proxy (Proxy))
-import Database.Redis (ConnectInfo (connectHost, connectPort), Connection, PortID (PortNumber), Reply, checkedConnect, defaultConnectInfo, echo, runRedis, connect)
+import Database.Redis (ConnectInfo (connectHost, connectPort), Connection, PortID (PortNumber), connect, defaultConnectInfo)
 import Endpoints (API)
-import Models
-    ( DatabaseConnectionError(..),
-      StatusResponse(..),
-      ApplicationConfig(redisPort, redisHost),
-      applicationConfigEnvParser )
+import qualified Env
+import Models (
+  AppConfig (redisHost, redisPort),
+  DatabaseConnectionError (..),
+  StatusResponse (..),
+  parser,
+ )
 import Network.Wai (Application)
 import Network.Wai.Handler.Warp (run)
+import RedisClient (checkedConnection)
 import Servant (
   Handler,
   ServerT,
  )
 import Servant.Checked.Exceptions (Envelope, pureErrEnvelope, pureSuccEnvelope)
 import Servant.Server (serve)
-import Control.Exception (try, SomeException)
 
-app :: IO Application
-app = do
-  config <- Env.parse (Env.header "Parse Redis Config") applicationConfigEnvParser
-  appWithConfig config
+runApp :: IO ()
+runApp = do
+  config <- Env.parse (Env.header "Parse Redis Config") parser
+  app <- appWithConfig config
+  run 8080 app
 
-appWithConfig :: ApplicationConfig -> IO Application
+appWithConfig :: AppConfig -> IO Application
 appWithConfig config = do
-  connection <- connect defaultConnectInfo{connectHost = redisHost config, connectPort = PortNumber (redisPort config)}
+  let connectInfo =
+        defaultConnectInfo
+          { connectHost = redisHost config
+          , connectPort = PortNumber (redisPort config)
+          }
+  connection <- connect connectInfo
   pure $ buildApp connection
 
 buildApp :: Connection -> Application
-buildApp conn = serve api (handlers conn)
+buildApp conn = serve api (serverHandlers conn)
  where
   api :: Proxy API
   api = Proxy
 
-runApp :: IO ()
-runApp = app >>= run 8080
-
-startup :: Connection -> IO (Either SomeException (Either Reply B.ByteString))
-startup connection = try $ runRedis connection (echo "hello")
-
 healthcheckHandler :: Connection -> Handler (Envelope '[DatabaseConnectionError] StatusResponse)
-healthcheckHandler conn = do
-  result <- liftIO $ startup conn
+healthcheckHandler connection = do
+  result <- liftIO $ checkedConnection connection
   case result of
-    Right (Right _) -> pureSuccEnvelope Ok
-    _ -> pureErrEnvelope DatabaseConnectionError
+    Right _ -> pureSuccEnvelope Ok
+    Left e -> pureErrEnvelope DatabaseConnectionError
 
-handlers :: Connection -> ServerT API Handler
-handlers = healthcheckHandler
+serverHandlers :: Connection -> ServerT API Handler
+serverHandlers = healthcheckHandler
