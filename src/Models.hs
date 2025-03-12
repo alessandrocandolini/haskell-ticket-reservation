@@ -15,15 +15,15 @@ import Network.Socket (PortNumber)
 import Refined (FromTo, RefineException, Refined, refine)
 import Servant.Checked.Exceptions (ErrStatus (toErrStatus))
 
-data ApplicationConfig = ApplicationConfig
+data AppConfig = AppConfig
   { redisHost :: String
   , redisPort :: PortNumber
   }
   deriving (Eq, Show)
 
-applicationConfigEnvParser :: Parser Error ApplicationConfig
-applicationConfigEnvParser =
-  ApplicationConfig
+parser :: Parser Error AppConfig
+parser =
+  AppConfig
     <$> var (str <=< nonempty) "REDIS_HOST" (def "localhost" <> helpDef (helpMessage "Redis host"))
     <*> var (auto <=< nonempty) "REDIS_PORT" (def 6379 <> helpDef (helpMessage "Redis port"))
  where

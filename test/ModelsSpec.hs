@@ -4,23 +4,23 @@ module ModelsSpec where
 
 import Env (Error (EmptyError), parsePure)
 import Models (
-  ApplicationConfig (ApplicationConfig),
-  applicationConfigEnvParser,
+  AppConfig (AppConfig),
+  parser,
  )
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.QuickCheck.Property ()
 
 spec :: Spec
 spec = describe "Models" $ do
-  describe "ApplicationConfig parser" $ do
+  describe "AppConfig parser" $ do
     it "can parse env variables when correctly set" $
-      parsePure applicationConfigEnvParser [("REDIS_HOST", "hello"), ("REDIS_PORT", "10")] `shouldBe` Right (ApplicationConfig "hello" 10)
+      parsePure parser [("REDIS_HOST", "hello"), ("REDIS_PORT", "10")] `shouldBe` Right (AppConfig "hello" 10)
 
     it "can parse env variables when redis port is not set" $
-      parsePure applicationConfigEnvParser [("REDIS_HOST", "hello")] `shouldBe` Right (ApplicationConfig "hello" 6379)
+      parsePure parser [("REDIS_HOST", "hello")] `shouldBe` Right (AppConfig "hello" 6379)
 
     it "uses default values when no env variable is set" $
-      parsePure applicationConfigEnvParser [] `shouldBe` Right (ApplicationConfig "localhost" 6379)
+      parsePure parser [] `shouldBe` Right (AppConfig "localhost" 6379)
 
-    it "failt to parse empty env variables" $
-      parsePure applicationConfigEnvParser [("REDIS_HOST", ""), ("REDIS_PORT", "")] `shouldBe` Left [("REDIS_HOST", EmptyError), ("REDIS_PORT", EmptyError)]
+    it "fails to parse empty env variables" $
+      parsePure parser [("REDIS_HOST", ""), ("REDIS_PORT", "")] `shouldBe` Left [("REDIS_HOST", EmptyError), ("REDIS_PORT", EmptyError)]
