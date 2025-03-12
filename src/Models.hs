@@ -5,12 +5,12 @@
 module Models where
 
 import Control.Monad ((<=<))
-import Data.Aeson (ToJSON (toJSON), object, (.=))
+import Data.Aeson (ToJSON (toJSON), object, (.=), FromJSON)
 import Data.UUID (UUID)
 import Env (Error, Parser, auto, def, helpDef, nonempty, str, var)
 import GHC.Exts (IsString)
 import GHC.Generics (Generic)
-import Network.HTTP.Types (status500)
+import Network.HTTP.Types (status500, status409)
 import Network.Socket (PortNumber)
 import Refined (FromTo, RefineException, Refined, refine)
 import Servant.Checked.Exceptions (ErrStatus (toErrStatus))
@@ -49,15 +49,42 @@ instance ErrStatus DatabaseConnectionError where
 newtype UserId = UserId UUID
   deriving (Eq, Show)
 
-newtype EventId = EventId String
+newtype EventId = EventId UUID
   deriving (Eq, Show)
-  deriving (IsString) via String
+  deriving (ToJSON, FromJSON) via UUID
 
-newtype SeatId = SeatId (Refined (FromTo 10 1000) Int)
+newtype MaximumNumberOfSeats = MaximumNumberOfSeats (Refined (FromTo 10 1000) Int)
+newtype SeatId = SeatId Int
   deriving (Eq, Show)
-
-seatId :: Int -> Either RefineException SeatId
-seatId = fmap SeatId . refine
+  deriving (Num, ToJSON, FromJSON) via Int
 
 newtype ReservationId = ReservationId UUID
   deriving (Eq, Show)
+
+data CreateEventRequest = CreateEventRequest
+  { eventName :: String
+  , maximumNumberOfSeats :: Int
+  }
+  deriving (Eq, Show, Generic)
+
+instance FromJSON CreateEventRequest
+
+newtype CreateEventResponse = CreateEventResponse
+  { eventId :: EventId
+  }
+  deriving (Eq, Show, Generic)
+
+instance ToJSON CreateEventResponse
+
+newtype Seats = Seats {
+  availableSeats :: [SeatId] } deriving (Eq, Show, Generic)
+
+instance ToJSON Seats
+
+data SeatAlreadyReserved = SeatAlreadyReserved deriving (Eq, Show)
+
+instance ToJSON SeatAlreadyReserved where
+  toJSON SeatAlreadyReserved = object ["message" .= ("seat already reserved" :: String)]
+
+instance ErrStatus SeatAlreadyReserved where
+  toErrStatus SeatAlreadyReserved = status409
