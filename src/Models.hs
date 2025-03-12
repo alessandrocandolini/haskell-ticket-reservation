@@ -74,8 +74,8 @@ newtype CreateEventResponse = CreateEventResponse
   }
   deriving (Eq, Show, Generic)
 
-instance ToJSON CreateEventRequest
-
+instance ToJSON CreateEventResponse
+ 
 newtype Seats = Seats {
   availableSeats :: [SeatId] } deriving (Eq, Show, Generic)
 
