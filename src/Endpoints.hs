@@ -3,7 +3,7 @@
 
 module Endpoints (API) where
 
-import Models (CreateEventRequest, CreateEventResponse, DatabaseConnectionError, EventId, SeatAlreadyReserved, SeatId, Seats, StatusResponse)
+import Models (CreateEventRequest, CreateEventResponse, DatabaseConnectionError, EventId, HoldRequest, ReservationRequest, SeatCannotBeHeld, SeatCannotBeReserved, SeatId, Seats, StatusResponse)
 import Servant (
   Capture,
   Get,
@@ -21,7 +21,8 @@ type HealthcheckEndpoints = "healthcheck" :> Throws DatabaseConnectionError :> G
 
 type ReservationEndpoints =
   "api" :> "v1" :> "events" :> ReqBody '[JSON] CreateEventRequest :> PostCreated '[JSON] CreateEventResponse
-    :<|> "api" :> "v1" :> "events" :> Capture "event_id" EventId :> "seats" :> Get '[JSON] Seats
-    :<|> "api" :> "v1" :> "events" :> Capture "event_id" EventId :> "seats" :> Capture "seat_id" SeatId :> "hold" :> Throws SeatAlreadyReserved :> PostAccepted '[JSON] NoContent
+    :<|> "api" :> "v1" :> "events" :> Capture "event_id" EventId :> "seats" :> Get '[JSON] Seats -- TODO make it paginated
+    :<|> "api" :> "v1" :> "events" :> Capture "event_id" EventId :> "holds" :> ReqBody '[JSON] HoldRequest :> Throws SeatCannotBeHeld :> PostAccepted '[JSON] NoContent
+    :<|> "api" :> "v1" :> "events" :> Capture "event_id" EventId :> "reservations" :> ReqBody '[JSON] ReservationRequest :> Throws SeatCannotBeReserved :> PostAccepted '[JSON] NoContent
 
 type API = HealthcheckEndpoints

@@ -1,18 +1,18 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 module Models where
 
 import Control.Monad ((<=<))
-import Data.Aeson (ToJSON (toJSON), object, (.=), FromJSON)
+import Data.Aeson (FromJSON, ToJSON (toJSON), object, (.=))
 import Data.UUID (UUID)
 import Env (Error, Parser, auto, def, helpDef, nonempty, str, var)
-import GHC.Exts (IsString)
 import GHC.Generics (Generic)
-import Network.HTTP.Types (status500, status409)
+import Network.HTTP.Types (status404, status409, status500)
 import Network.Socket (PortNumber)
-import Refined (FromTo, RefineException, Refined, refine)
+import Refined (FromTo, Refined)
 import Servant.Checked.Exceptions (ErrStatus (toErrStatus))
 
 data AppConfig = AppConfig
@@ -76,15 +76,42 @@ newtype CreateEventResponse = CreateEventResponse
 
 instance ToJSON CreateEventResponse
 
-newtype Seats = Seats {
-  availableSeats :: [SeatId] } deriving (Eq, Show, Generic)
+newtype Seats = Seats
+  { availableSeats :: [SeatId]
+  }
+  deriving (Eq, Show, Generic)
 
 instance ToJSON Seats
 
-data SeatAlreadyReserved = SeatAlreadyReserved deriving (Eq, Show)
+newtype Ttl = Ttl {ttlInSeconds :: Int} deriving (Eq, Show, Num, Ord) via Int
 
-instance ToJSON SeatAlreadyReserved where
-  toJSON SeatAlreadyReserved = object ["message" .= ("seat already reserved" :: String)]
+data SeatCannotBeHeld = SeatDoesNotExist SeatId | SeatOnHold SeatId UserId | SeatReserved SeatId UserId deriving (Eq, Show)
+data SeatCannotBeReserved = SeatNotHeld SeatId | HoldFailure SeatCannotBeHeld deriving (Eq,Show)
 
-instance ErrStatus SeatAlreadyReserved where
-  toErrStatus SeatAlreadyReserved = status409
+instance ToJSON SeatCannotBeHeld where
+  toJSON (SeatDoesNotExist seatId) = object ["message" .= ("seat " ++ show seatId ++ " does not exist" :: String)]
+  toJSON (SeatOnHold seatId userId) = object ["message" .= (("seat " ++ show seatId ++ " temporarily held by user " ++ show userId) :: String)]
+  toJSON (SeatReserved seatId userId) = object ["message" .= (("seat " ++ show seatId ++ " reserved by user " ++ show userId) :: String)] -- IMPORTANT: we only expose this for troubleshooting, in production we should never ever expose publicly who reserved/held a seat
+
+instance ErrStatus SeatCannotBeHeld where
+  toErrStatus (SeatDoesNotExist _) = status404
+  toErrStatus (SeatOnHold _ _) = status409
+  toErrStatus (SeatReserved _ _) = status409
+
+instance ToJSON SeatCannotBeReserved where
+  toJSON (SeatNotHeld seatId) = object ["message" .= ("seat " ++ show seatId ++ " is not held by the user" :: String)]
+  toJSON (HoldFailure e) = toJSON e
+
+instance ErrStatus SeatCannotBeReserved where
+  toErrStatus (SeatNotHeld _) = status409
+  toErrStatus (HoldFailure e) = toErrStatus e
+
+newtype HoldRequest = HoldRequest {
+   seatId :: SeatId } deriving (Eq,Show,Generic)
+
+instance FromJSON HoldRequest
+
+newtype ReservationRequest = ReservationRequest {
+   seatId :: SeatId } deriving (Eq,Show,Generic)
+
+instance FromJSON ReservationRequest
